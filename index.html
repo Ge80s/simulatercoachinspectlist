@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教员能力评估平台</title>
+<style>
+  :root {
+    --theme: #1a56db;
+    --bg: #f1f5f9;
+    --card: #fff;
+    --text: #1e293b;
+    --text2: #475569;
+    --text3: #64748b;
+    --text4: #94a3b8;
+    --border: #e2e8f0;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --green-light: #dcfce7;
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --red-light: #fee2e2;
+    --muted-bg: #f8fafc;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+  .hidden { display:none !important; }
+
+  /* ── Landing ── */
+  .landing { min-height:100vh; background:linear-gradient(135deg,#0f172a,#1e293b); display:flex; align-items:center; justify-content:center; padding:24px; }
+  .landing-inner { max-width:520px; width:100%; text-align:center; }
+  .landing-icon { width:64px; height:64px; margin:0 auto 16px; background:linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px; }
+  .landing h1 { color:#f1f5f9; font-size:26px; font-weight:700; }
+  .landing .sub { color:#94a3b8; margin-top:8px; font-size:14px; }
+  .landing .prompt { color:#cbd5e1; font-size:15px; margin:28px 0 20px; }
+  .type-btn { display:flex; align-items:center; gap:12px; width:100%; padding:18px 24px; background:rgba(255,255,255,.06); border:2px solid rgba(255,255,255,.12); border-radius:14px; color:#f1f5f9; font-size:17px; font-weight:600; cursor:pointer; transition:all .2s; margin-bottom:12px; }
+  .type-btn:hover { transform:translateX(6px); }
+  .type-btn .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+  /* ── Top bar ── */
+  .topbar { position:sticky; top:0; z-index:50; padding:14px 24px; display:flex; align-items:center; justify-content:space-between; color:#fff; box-shadow:0 2px 12px rgba(0,0,0,.15); flex-wrap:wrap; gap:8px; }
+  .topbar .back-btn { background:rgba(255,255,255,.15); border:none; color:#fff; border-radius:8px; padding:6px 10px; cursor:pointer; font-size:14px; }
+  .topbar .title { font-weight:700; font-size:17px; }
+  .step-tabs { display:flex; gap:4px; }
+  .step-tab { padding:5px 12px; border-radius:6px; border:none; cursor:pointer; font-size:12px; font-weight:600; transition:all .2s; }
+  .step-tab.active { background:#fff; }
+  .step-tab:not(.active) { background:rgba(255,255,255,.15); color:rgba(255,255,255,.8); }
+
+  /* ── Container ── */
+  .container { max-width:860px; margin:0 auto; padding:24px 16px; }
+  .card { background:var(--card); border-radius:16px; padding:28px; box-shadow:0 1px 8px rgba(0,0,0,.06); }
+  .card h2 { font-size:19px; margin-bottom:20px; }
+
+  /* ── Form ── */
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media(max-width:600px){ .form-grid { grid-template-columns:1fr; } }
+  .form-grid label { display:flex; flex-direction:column; gap:4px; }
+  .form-grid label span { font-size:13px; font-weight:600; color:var(--text2); }
+  .form-grid input { padding:10px 12px; border-radius:10px; border:1.5px solid var(--border); font-size:14px; outline:none; font-family:inherit; transition:border .2s; }
+  .form-grid input:focus { border-color:var(--theme); }
+
+  /* ── Buttons ── */
+  .btn-row { display:flex; justify-content:space-between; margin-top:24px; flex-wrap:wrap; gap:8px; }
+  .btn-primary { padding:10px 32px; border-radius:10px; border:none; color:#fff; font-weight:700; font-size:15px; cursor:pointer; transition:all .15s; }
+  .btn-primary:active { transform:scale(.96); }
+  .btn-outline { padding:10px 28px; border-radius:10px; border:2px solid var(--theme); background:#fff; color:var(--theme); font-weight:700; font-size:14px; cursor:pointer; }
+
+  /* ── Competency panels ── */
+  .comp-panel { background:var(--card); border-radius:14px; margin-bottom:14px; box-shadow:0 1px 6px rgba(0,0,0,.05); overflow:hidden; border:2px solid transparent; transition:border .2s; }
+  .comp-panel.open { border-color:var(--theme); }
+  .comp-header { width:100%; padding:16px 20px; background:transparent; border:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; text-align:left; font-family:inherit; }
+  .comp-panel.open .comp-header { background:color-mix(in srgb, var(--theme) 4%, transparent); }
+  .comp-header .comp-title { font-size:16px; font-weight:700; color:var(--text); }
+  .comp-header .comp-sub { margin:2px 0 0; font-size:12px; color:var(--text3); }
+  .comp-header .comp-right { display:flex; align-items:center; gap:10px; }
+  .comp-header .comp-score { font-size:13px; font-weight:600; }
+  .comp-header .arrow { font-size:18px; color:var(--text4); transition:transform .2s; }
+  .comp-panel.open .arrow { transform:rotate(180deg); }
+  .comp-body { padding:0 20px 20px; }
+
+  /* ── OB rows ── */
+  .ob-label { font-size:13px; font-weight:600; color:var(--text2); margin-bottom:8px; }
+  .ob-row { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; background:var(--muted-bg); margin-bottom:4px; transition:background .2s; }
+  .ob-row.up { background:var(--green-bg); }
+  .ob-row.down { background:var(--red-bg); }
+  .ob-row .ob-id { font-size:12px; font-weight:700; color:var(--text3); min-width:52px; }
+  .ob-row .ob-text { flex:1; font-size:13px; color:#334155; }
+  .thumb-btn { background:none; border:none; cursor:pointer; padding:4px; border-radius:6px; display:flex; align-items:center; }
+
+  /* ── Score ── */
+  .score-row { display:flex; gap:6px; margin-top:6px; margin-bottom:14px; }
+  .score-btn { width:40px; height:40px; border-radius:10px; border:2px solid var(--border); background:#fff; color:var(--text4); font-weight:700; font-size:16px; cursor:pointer; transition:all .15s; }
+  .score-btn.active { border-color:var(--theme); background:var(--theme); color:#fff; }
+
+  /* ── Textarea ── */
+  .ta-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:600px){ .ta-grid { grid-template-columns:1fr; } }
+  .ta-grid label { display:flex; flex-direction:column; gap:4px; }
+  .ta-grid label span { font-size:13px; font-weight:600; }
+  .ta-grid textarea, .conclusion-ta { width:100%; padding:10px; border-radius:10px; border:1.5px solid var(--border); font-size:13px; resize:vertical; outline:none; font-family:inherit; transition:border .2s; box-sizing:border-box; }
+  .ta-grid textarea:focus, .conclusion-ta:focus { border-color:var(--theme); }
+
+  /* ── Conclusion ── */
+  .ref-box { margin-bottom:14px; padding:14px; background:var(--muted-bg); border-radius:10px; }
+  .ref-box .ref-title { font-size:12px; font-weight:600; color:var(--text3); margin-bottom:8px; }
+  .ref-item { font-size:12px; margin-bottom:3px; cursor:pointer; }
+  .ref-item.green { color:var(--green); }
+  .ref-item.red { color:var(--red); }
+  .auto-btn { margin-bottom:12px; padding:8px 18px; border-radius:8px; border:1.5px solid var(--theme); background:color-mix(in srgb, var(--theme) 4%, transparent); font-weight:600; font-size:13px; cursor:pointer; font-family:inherit; }
+
+  /* ── Signature ── */
+  .sign-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:12px; }
+  @media(max-width:600px){ .sign-grid { grid-template-columns:1fr; } }
+  .sign-label { font-size:13px; font-weight:600; color:var(--text2); margin-bottom:6px; }
+  .sign-canvas-wrap { border:2px dashed #cbd5e1; border-radius:10px; overflow:hidden; background:#fafafa; }
+  .sign-canvas-wrap canvas { width:100%; height:120px; cursor:crosshair; touch-action:none; display:block; }
+  .sign-clear { margin-top:4px; padding:4px 12px; border-radius:6px; border:1px solid var(--border); background:#fff; font-size:12px; color:var(--text3); cursor:pointer; }
+
+  /* ── Preview ── */
+  .preview-header { text-align:center; padding-bottom:14px; margin-bottom:18px; border-bottom:3px solid var(--theme); }
+  .preview-header h2 { margin:0; font-size:22px; }
+  .preview-header p { color:var(--text3); margin:4px 0 0; font-size:13px; }
+  .info-grid-preview { display:grid; grid-template-columns:1fr 1fr; gap:6px 24px; font-size:13px; margin-bottom:18px; padding:14px; background:var(--muted-bg); border-radius:10px; }
+  .comp-summary { margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid #f1f5f9; }
+  .comp-summary-head { display:flex; justify-content:space-between; align-items:center; }
+  .comp-summary-head span:first-child { font-weight:700; font-size:14px; }
+  .ob-pills { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .ob-pill { font-size:11px; padding:2px 8px; border-radius:6px; }
+  .ob-pill.up { background:var(--green-light); color:var(--green); }
+  .ob-pill.down { background:var(--red-light); color:var(--red); }
+  .ob-pill.none { background:#f1f5f9; color:var(--text4); }
+  .conclusion-preview { margin-top:12px; padding:14px; background:var(--muted-bg); border-radius:10px; white-space:pre-wrap; font-size:13px; }
+  .sign-preview { display:flex; gap:48px; margin-top:20px; }
+  .sign-preview-box { flex:1; text-align:center; }
+  .sign-preview-box p { font-size:12px; font-weight:600; color:var(--text2); margin-bottom:4px; }
+  .sign-preview-box .line { border-bottom:1px solid var(--text); height:56px; display:flex; align-items:flex-end; justify-content:center; }
+  .sign-preview-box img { max-height:52px; }
+
+  .export-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+  .export-btn { padding:12px 32px; border-radius:10px; border:none; color:#fff; font-weight:700; font-size:15px; cursor:pointer; transition:all .15s; }
+  .export-btn:active { transform:scale(.96); }
+  .export-btn.pdf { background:#dc2626; box-shadow:0 4px 14px rgba(220,38,38,.3); }
+  .export-btn.csv { background:#16a34a; box-shadow:0 4px 14px rgba(22,163,106,.3); }
+</style>
+</head>
+<body>
+
+<!-- ═══════ Landing ═══════ -->
+<div id="page-landing" class="landing">
+  <div class="landing-inner">
+    <div class="landing-icon">✈</div>
+    <h1>教员能力评估平台</h1>
+    <p class="sub">Instructor Competency Assessment Platform</p>
+    <p class="prompt">请选择评估模块</p>
+    <div id="type-buttons"></div>
+  </div>
+</div>
+
+<!-- ═══════ Main ═══════ -->
+<div id="page-main" class="hidden">
+  <div class="topbar" id="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="back-btn" onclick="goLanding()">← 返回</button>
+      <span class="title" id="topbar-title"></span>
+    </div>
+    <div class="step-tabs" id="step-tabs"></div>
+  </div>
+  <div class="container" id="main-content"></div>
+</div>
+
+<script>
+/* ══════════════════════ DATA ══════════════════════ */
+const TYPES = [
+  { id:"supervision", label:"教员教学质量督查表", color:"#1a56db" },
+  { id:"ebt", label:"教员EBT资质评估", color:"#0e7c6b" },
+];
+
+const COMPETENCIES = [
+  { id:"flight", title:"飞行员胜任力", subtitle:"", obs:[] },
+  { id:"env", title:"管理学习环境", subtitle:"管理学习环境：确保教学，评估环境合适并且安全", obs:[
+    {id:"OB2.1",text:"在教学和评估中运用威胁和差错管理（TEM）"},
+    {id:"OB2.2",text:"针对教学/评估期间可能发生的情况，讲解相应的安全程序"},
+    {id:"OB2.3",text:"在正确的时间，以正确的水平适当干预（例如逐步从语言提示到接管操纵）"},
+    {id:"OB2.4",text:"根据实际情况，在任何干预后恢复教学或评估"},
+    {id:"OB2.5",text:"计划和准备训练媒体、设备和资源"},
+    {id:"OB2.6",text:"对可能影响训练的设备或飞机限制进行讲评（如适用）"},
+    {id:"OB2.7",text:"创设和管理适于训练目标的条件（例如空域，ATC，天气，时间等）"},
+    {id:"OB2.8",text:"适应环境的变化，最大程度减少训练中断"},
+    {id:"OB2.9",text:"管理训练时间、训练媒体和设备来确保满足训练目标"},
+  ]},
+  { id:"teaching", title:"教学实施", subtitle:"教学：为发展学员的胜任力而实施训练", obs:[
+    {id:"OB3.1",text:"参考批准的资料（运行/技术/训练手册/标准和法规）"},
+    {id:"OB3.2",text:"明确训练目标和训练时的角色"},
+    {id:"OB3.3",text:"遵守经批准的训练课程"},
+    {id:"OB3.4",text:"运用合适的教学方法（例如讲解，示范，探索型学习，引导式教学，上座教学）"},
+    {id:"OB3.5",text:"保持运行的相关性和真实性"},
+    {id:"OB3.6",text:"调整教员的教学输入量，确保能实现训练目标"},
+    {id:"OB3.7",text:"针对可能打乱事件顺序的情况进行调整"},
+    {id:"OB3.8",text:"持续评估学员的胜任力"},
+    {id:"OB3.9",text:"鼓励学员进行自我评估"},
+    {id:"OB3.10",text:"允许学员及时地自行纠错"},
+    {id:"OB3.11",text:"应用以学员为中心的反馈技巧（例如Facilitation等）"},
+    {id:"OB3.12",text:"进行正向强化"},
+  ]},
+  { id:"interaction", title:"与学员互动", subtitle:"与学员互动：支持学员们的学习和发展；展现出榜样和表率行为（模范作用）", obs:[
+    {id:"OB4.1",text:"表现出对学员的尊重（例如文化、语言、经验）"},
+    {id:"OB4.2",text:"展示出耐心和同理心（例如积极倾听，领会非语言的信息，和鼓励对话）"},
+    {id:"OB4.3",text:"管理学员的学习障碍"},
+    {id:"OB4.4",text:"鼓励参与和共同支持"},
+    {id:"OB4.5",text:"指导学员"},
+    {id:"OB4.6",text:"支持公司/训练机构和局方的目标和训练政策"},
+    {id:"OB4.7",text:"展示出正直的品质（例如诚实和专业原则）"},
+    {id:"OB4.8",text:"展示出可接受的个人行为、社会行为、专业知识，在专业和社交方面树立榜样"},
+    {id:"OB4.9",text:"积极寻求和接受反馈，以提高个人能力"},
+  ]},
+  { id:"assessment", title:"评估", subtitle:"评估：评估学员的胜任力；为训练系统的持续改进做贡献", obs:[
+    {id:"OB5.1",text:"遵守公司/训练机构和局方的要求"},
+    {id:"OB5.2",text:"确保学员了解评估过程"},
+    {id:"OB5.3",text:"运用胜任力的标准和条件"},
+    {id:"OB5.4",text:"评估学员的胜任力"},
+    {id:"OB5.5",text:"执行评分"},
+    {id:"OB5.6",text:"根据评估结果提供建议"},
+    {id:"OB5.7",text:"根据总结评估结果做出决策"},
+    {id:"OB5.8",text:"向学员提供清晰的反馈"},
+    {id:"OB5.9",text:"报告训练系统的优缺点（如训练环境，课程，评估），包括学员的反馈"},
+    {id:"OB5.10",text:"对训练系统的改进提出建议"},
+    {id:"OB5.11",text:"运用适合的形式和媒体形成报告"},
+  ]},
+];
+
+/* ── State ── */
+let state = resetState();
+function resetState(){
+  const comps = {};
+  COMPETENCIES.forEach(c => {
+    const obs = {};
+    c.obs.forEach(o => obs[o.id] = null);
+    comps[c.id] = { score:0, strengths:"", weaknesses:"", obs };
+  });
+  return { type:"", step:1, expanded:null, name:"", employeeId:"", unit:"", simId:"", assessor:"", date:"", timeSlot:"", comps, conclusion:"", signAssessor:null, signInstructor:null };
+}
+
+function getType(){ return TYPES.find(t=>t.id===state.type); }
+function themeColor(){ return getType()?.color || "#1a56db"; }
+
+/* ══════════════════════ RENDER ══════════════════════ */
+const $ = id => document.getElementById(id);
+const STEPS = ["基本信息","能力评估","结论签字","预览导出"];
+
+function goLanding(){
+  $("page-landing").classList.remove("hidden");
+  $("page-main").classList.add("hidden");
+}
+
+function selectType(id){
+  state = resetState();
+  state.type = id;
+  state.step = 1;
+  $("page-landing").classList.add("hidden");
+  $("page-main").classList.remove("hidden");
+  renderMain();
+}
+
+function goStep(n){ state.step=n; renderMain(); }
+
+/* ── Build type buttons ── */
+(function(){
+  const wrap = $("type-buttons");
+  TYPES.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = "type-btn";
+    btn.innerHTML = `<span class="dot" style="background:${t.color}"></span>${t.label}`;
+    btn.onmouseenter = () => { btn.style.background=t.color+"22"; btn.style.borderColor=t.color; };
+    btn.onmouseleave = () => { btn.style.background="rgba(255,255,255,.06)"; btn.style.borderColor="rgba(255,255,255,.12)"; };
+    btn.onclick = () => selectType(t.id);
+    wrap.appendChild(btn);
+  });
+})();
+
+/* ── Main render ── */
+function renderMain(){
+  const tc = themeColor();
+  const tp = getType();
+  // topbar
+  $("topbar").style.background = tc;
+  $("topbar-title").textContent = tp.label;
+  // tabs
+  $("step-tabs").innerHTML = STEPS.map((s,i) =>
+    `<button class="step-tab ${state.step===i+1?'active':''}" onclick="goStep(${i+1})" style="${state.step===i+1?'color:'+tc:''}">${i+1}. ${s}</button>`
+  ).join("");
+  // content
+  const mc = $("main-content");
+  if(state.step===1) mc.innerHTML = renderInfo();
+  else if(state.step===2) mc.innerHTML = renderAssess();
+  else if(state.step===3) mc.innerHTML = renderConclusion();
+  else mc.innerHTML = renderPreview();
+
+  // post-render bindings
+  if(state.step===2) bindAssess();
+  if(state.step===3) bindConclusion();
+}
+
+/* ═══ Step 1: Info ═══ */
+function renderInfo(){
+  const tc = themeColor();
+  const fields = [
+    ["被评估教员姓名","name","text"],["员工号","employeeId","text"],["单位","unit","text"],
+    ["机型模拟机编号","simId","text"],["评估员","assessor","text"],["日期","date","date"],["时段","timeSlot","text"]
+  ];
+  return `<div class="card"><h2>基本信息</h2><div class="form-grid">${fields.map(([l,k,t])=>
+    `<label><span>${l}</span><input type="${t}" value="${state[k]}" oninput="state['${k}']=this.value" placeholder="请输入${l}"></label>`
+  ).join("")}</div><div class="btn-row" style="justify-content:flex-end"><button class="btn-primary" style="background:${tc};box-shadow:0 4px 14px ${tc}44" onclick="goStep(2)">下一步 →</button></div></div>`;
+}
+
+/* ═══ Step 2: Assess ═══ */
+function renderAssess(){
+  const tc = themeColor();
+  let html = "";
+  COMPETENCIES.forEach(c => {
+    const cd = state.comps[c.id];
+    const isOpen = state.expanded === c.id;
+    html += `<div class="comp-panel ${isOpen?'open':''}" id="panel-${c.id}">`;
+    html += `<button class="comp-header" onclick="toggleComp('${c.id}')"><div><span class="comp-title">${c.title}</span>${c.subtitle?`<p class="comp-sub">${c.subtitle}</p>`:""}</div><div class="comp-right"><span class="comp-score" style="color:${tc}">${cd.score}/5</span><span class="arrow">▼</span></div></button>`;
+    if(isOpen){
+      html += `<div class="comp-body">`;
+      if(c.obs.length){
+        html += `<p class="ob-label">行为指标 (OB)</p>`;
+        c.obs.forEach(ob => {
+          const v = cd.obs[ob.id];
+          const cls = v===true?"up":v===false?"down":"";
+          html += `<div class="ob-row ${cls}"><span class="ob-id">${ob.id}</span><span class="ob-text">${ob.text}</span>`;
+          html += `<button class="thumb-btn" onclick="setOb('${c.id}','${ob.id}',true)" title="赞">${thumbUpSvg(v===true)}</button>`;
+          html += `<button class="thumb-btn" onclick="setOb('${c.id}','${ob.id}',false)" title="踩">${thumbDownSvg(v===false)}</button></div>`;
+        });
+      }
+      html += `<p class="ob-label" style="margin-top:12px">评分（5分制）</p><div class="score-row">`;
+      for(let i=1;i<=5;i++) html += `<button class="score-btn ${cd.score>=i?'active':''}" style="${cd.score>=i?'border-color:'+tc+';background:'+tc:''}" onclick="setScore('${c.id}',${i})">${i}</button>`;
+      html += `</div>`;
+      html += `<div class="ta-grid"><label><span style="color:var(--green)">优点</span><textarea rows="3" placeholder="请输入该能力的优点…" oninput="state.comps['${c.id}'].strengths=this.value">${cd.strengths}</textarea></label>`;
+      html += `<label><span style="color:var(--red)">不足</span><textarea rows="3" placeholder="请输入该能力的不足…" oninput="state.comps['${c.id}'].weaknesses=this.value">${cd.weaknesses}</textarea></label></div>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+  html += `<div class="btn-row"><button class="btn-outline" style="border-color:${tc};color:${tc}" onclick="goStep(1)">← 上一步</button><button class="btn-primary" style="background:${tc};box-shadow:0 4px 14px ${tc}44" onclick="goStep(3)">下一步 →</button></div>`;
+  return html;
+}
+
+function toggleComp(id){ state.expanded = state.expanded===id ? null : id; renderMain(); }
+function setOb(cid,oid,val){ state.comps[cid].obs[oid] = state.comps[cid].obs[oid]===val ? null : val; renderMain(); }
+function setScore(cid,n){ state.comps[cid].score = n; renderMain(); }
+
+function thumbUpSvg(active){
+  const c = active?"#16a34a":"#94a3b8"; const f = active?"#16a34a":"none";
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="${f}" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 22V11l5-9a2 2 0 0 1 2 2v4h5.5a2 2 0 0 1 2 2.4l-1.7 8A2 2 0 0 1 18.8 20H7z"/><path d="M3 11h2v11H3z"/></svg>`;
+}
+function thumbDownSvg(active){
+  const c = active?"#dc2626":"#94a3b8"; const f = active?"#dc2626":"none";
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="${f}" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2V13l-5 9a2 2 0 0 1-2-2v-4H4.5a2 2 0 0 1-2-2.4l1.7-8A2 2 0 0 1 5.2 4H17z"/><path d="M19 2h2v11h-2z"/></svg>`;
+}
+
+function bindAssess(){}
+
+/* ═══ Step 3: Conclusion ═══ */
+function renderConclusion(){
+  const tc = themeColor();
+  const strengths = [], weaknesses = [];
+  COMPETENCIES.forEach(c => {
+    if(state.comps[c.id].strengths) strengths.push({title:c.title, text:state.comps[c.id].strengths});
+    if(state.comps[c.id].weaknesses) weaknesses.push({title:c.title, text:state.comps[c.id].weaknesses});
+  });
+
+  let html = `<div class="card"><h2>结论与建议</h2>`;
+  if(strengths.length || weaknesses.length){
+    html += `<div class="ref-box"><p class="ref-title">可引用的评估记录（点击添加）：</p>`;
+    strengths.forEach((s,i) => html += `<div class="ref-item green" onclick="appendRef('green',${i})">＋【${s.title}】${s.text}</div>`);
+    weaknesses.forEach((s,i) => html += `<div class="ref-item red" onclick="appendRef('red',${i})">＋【${s.title}】${s.text}</div>`);
+    html += `</div>`;
+  }
+  html += `<button class="auto-btn" style="color:${tc};border-color:${tc}" onclick="autoConclusion()">⚡ 一键汇总优点与不足</button>`;
+  html += `<textarea class="conclusion-ta" id="conclusion-ta" rows="8" placeholder="请填写结论与建议…" oninput="state.conclusion=this.value">${state.conclusion}</textarea>`;
+
+  html += `<h3 style="margin-top:24px;margin-bottom:12px;font-size:16px">手写签字</h3>`;
+  html += `<div class="sign-grid">`;
+  html += `<div><p class="sign-label">评估员签字</p><div class="sign-canvas-wrap"><canvas id="sign-assessor" width="360" height="120"></canvas></div><button class="sign-clear" onclick="clearSign('assessor')">清除</button></div>`;
+  html += `<div><p class="sign-label">被评估教员签字</p><div class="sign-canvas-wrap"><canvas id="sign-instructor" width="360" height="120"></canvas></div><button class="sign-clear" onclick="clearSign('instructor')">清除</button></div>`;
+  html += `</div>`;
+
+  html += `<div class="btn-row"><button class="btn-outline" style="border-color:${tc};color:${tc}" onclick="goStep(2)">← 上一步</button><button class="btn-primary" style="background:${tc};box-shadow:0 4px 14px ${tc}44" onclick="goStep(4)">预览与导出 →</button></div></div>`;
+  return html;
+}
+
+function appendRef(type, idx){
+  const items = [];
+  COMPETENCIES.forEach(c => {
+    const field = type==='green' ? 'strengths' : 'weaknesses';
+    if(state.comps[c.id][field]) items.push({title:c.title, text:state.comps[c.id][field]});
+  });
+  if(items[idx]){
+    state.conclusion += (state.conclusion?"\n":"") + "【"+items[idx].title+"】"+items[idx].text;
+    const ta = $("conclusion-ta");
+    if(ta) ta.value = state.conclusion;
+  }
+}
+
+function autoConclusion(){
+  let text = "";
+  const s = [], w = [];
+  COMPETENCIES.forEach(c => {
+    if(state.comps[c.id].strengths) s.push("【"+c.title+"】"+state.comps[c.id].strengths);
+    if(state.comps[c.id].weaknesses) w.push("【"+c.title+"】"+state.comps[c.id].weaknesses);
+  });
+  if(s.length) text += "优点：\n" + s.join("\n") + "\n\n";
+  if(w.length) text += "不足：\n" + w.join("\n") + "\n\n";
+  text += "建议：";
+  state.conclusion = text;
+  const ta = $("conclusion-ta");
+  if(ta) ta.value = text;
+}
+
+/* ── Signature Canvas ── */
+let drawing = false;
+function bindConclusion(){
+  ["assessor","instructor"].forEach(who => {
+    const canvas = $("sign-"+who);
+    if(!canvas) return;
+    // restore
+    if(state["sign"+capitalize(who)]){
+      const img = new Image();
+      img.onload = () => canvas.getContext("2d").drawImage(img,0,0);
+      img.src = state["sign"+capitalize(who)];
+    }
+    const getPos = e => {
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      return [(t.clientX-r.left)*(canvas.width/r.width), (t.clientY-r.top)*(canvas.height/r.height)];
+    };
+    const start = e => { e.preventDefault(); drawing=true; const ctx=canvas.getContext("2d"); const [x,y]=getPos(e); ctx.beginPath(); ctx.moveTo(x,y); };
+    const move = e => { if(!drawing)return; e.preventDefault(); const ctx=canvas.getContext("2d"); ctx.lineWidth=2; ctx.lineCap="round"; ctx.strokeStyle="#1e293b"; const [x,y]=getPos(e); ctx.lineTo(x,y); ctx.stroke(); };
+    const end = () => { drawing=false; state["sign"+capitalize(who)] = canvas.toDataURL(); };
+    canvas.addEventListener("mousedown",start); canvas.addEventListener("mousemove",move); canvas.addEventListener("mouseup",end); canvas.addEventListener("mouseleave",end);
+    canvas.addEventListener("touchstart",start,{passive:false}); canvas.addEventListener("touchmove",move,{passive:false}); canvas.addEventListener("touchend",end);
+  });
+}
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function clearSign(who){
+  const canvas = $("sign-"+who);
+  if(canvas) canvas.getContext("2d").clearRect(0,0,canvas.width,canvas.height);
+  state["sign"+capitalize(who)] = null;
+}
+
+/* ═══ Step 4: Preview ═══ */
+function renderPreview(){
+  const tc = themeColor();
+  const tp = getType();
+  let html = `<div class="card">`;
+  html += `<div class="preview-header" style="border-color:${tc}"><h2 style="color:${tc}">${tp.label}</h2><p>评估报告预览</p></div>`;
+  html += `<div class="info-grid-preview"><span><b>被评估教员：</b>${state.name||"—"}</span><span><b>员工号：</b>${state.employeeId||"—"}</span><span><b>单位：</b>${state.unit||"—"}</span><span><b>机型模拟机编号：</b>${state.simId||"—"}</span><span><b>评估员：</b>${state.assessor||"—"}</span><span><b>日期：</b>${state.date||"—"}</span><span><b>时段：</b>${state.timeSlot||"—"}</span></div>`;
+
+  COMPETENCIES.forEach(c => {
+    const cd = state.comps[c.id];
+    html += `<div class="comp-summary"><div class="comp-summary-head"><span>${c.title}</span><span>${"★".repeat(cd.score)}${"☆".repeat(5-cd.score)}</span></div>`;
+    if(c.obs.length){
+      html += `<div class="ob-pills">`;
+      c.obs.forEach(ob => {
+        const v = cd.obs[ob.id];
+        const cls = v===true?"up":v===false?"down":"none";
+        html += `<span class="ob-pill ${cls}">${ob.id} ${v===true?"✓":v===false?"✗":"—"}</span>`;
+      });
+      html += `</div>`;
+    }
+    if(cd.strengths||cd.weaknesses){
+      html += `<div style="display:flex;gap:16px;margin-top:6px;font-size:12px">`;
+      if(cd.strengths) html += `<span style="color:var(--green)">优点：${cd.strengths}</span>`;
+      if(cd.weaknesses) html += `<span style="color:var(--red)">不足：${cd.weaknesses}</span>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+
+  html += `<div class="conclusion-preview"><b style="color:${tc}">结论与建议：</b><br>${state.conclusion||"无"}</div>`;
+  html += `<div class="sign-preview">`;
+  [{l:"评估员签字",d:state.signAssessor},{l:"被评估教员签字",d:state.signInstructor}].forEach(s => {
+    html += `<div class="sign-preview-box"><p>${s.l}</p><div class="line">${s.d?`<img src="${s.d}">`:""}</div></div>`;
+  });
+  html += `</div></div>`;
+
+  html += `<div class="export-row"><button class="btn-outline" style="border-color:${tc};color:${tc}" onclick="goStep(3)">← 返回修改</button><button class="export-btn pdf" onclick="exportPDF()">📄 导出 PDF</button><button class="export-btn csv" onclick="exportCSV()">📊 导出 Excel (CSV)</button></div>`;
+  return html;
+}
+
+/* ══════════════════════ EXPORT ══════════════════════ */
+function exportCSV(){
+  const tp = getType();
+  const rows = [
+    ["评估类型",tp.label],["姓名",state.name],["员工号",state.employeeId],["单位",state.unit],
+    ["机型模拟机编号",state.simId],["评估员",state.assessor],["日期",state.date],["时段",state.timeSlot],[""]
+  ];
+  COMPETENCIES.forEach(c => {
+    const cd = state.comps[c.id];
+    rows.push([c.title,"评分: "+cd.score+"/5"]);
+    c.obs.forEach(ob => {
+      const v = cd.obs[ob.id];
+      rows.push(["",ob.id,ob.text,v===true?"👍":v===false?"👎":"未评"]);
+    });
+    rows.push(["","优点",cd.strengths]);
+    rows.push(["","不足",cd.weaknesses]);
+    rows.push([""]);
+  });
+  rows.push(["结论与建议",state.conclusion]);
+  const bom = "\uFEFF";
+  const csv = bom + rows.map(r=>r.map(c=>`"${String(c||"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `教员评估_${state.name||"未填"}_${state.date||"未填"}.csv`;
+  a.click();
+}
+
+function exportPDF(){
+  const tc = themeColor();
+  const tp = getType();
+  const w = window.open("","_blank");
+  if(!w){ alert("请允许弹出窗口以导出PDF"); return; }
+
+  const obRows = (cid, obs) => obs.map(o => {
+    const v = state.comps[cid].obs[o.id];
+    return `<tr><td style="padding:4px 8px;border:1px solid #cbd5e1;width:60px;font-weight:600;color:#475569">${o.id}</td><td style="padding:4px 8px;border:1px solid #cbd5e1">${o.text}</td><td style="padding:4px 8px;border:1px solid #cbd5e1;text-align:center;width:50px;font-size:18px">${v===true?"✅":v===false?"❌":"—"}</td></tr>`;
+  }).join("");
+
+  const sections = COMPETENCIES.map(c => {
+    const cd = state.comps[c.id];
+    return `<div style="margin-bottom:18px;page-break-inside:avoid"><h3 style="margin:0 0 6px;color:${tc};font-size:15px;border-bottom:2px solid ${tc};padding-bottom:4px">${c.title}${c.subtitle?" — "+c.subtitle:""}</h3>${c.obs.length?`<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">${obRows(c.id,c.obs)}</table>`:""}<div style="display:flex;gap:16px;font-size:13px"><span><b>评分：</b>${"★".repeat(cd.score)}${"☆".repeat(5-cd.score)} (${cd.score}/5)</span></div><div style="display:flex;gap:24px;font-size:12px;margin-top:4px"><div style="flex:1"><b>优点：</b>${cd.strengths||"无"}</div><div style="flex:1"><b>不足：</b>${cd.weaknesses||"无"}</div></div></div>`;
+  }).join("");
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>教员能力评估报告</title><style>@page{size:A4;margin:20mm}body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;color:#1e293b;font-size:13px;line-height:1.6}.header{text-align:center;border-bottom:3px solid ${tc};padding-bottom:12px;margin-bottom:16px}.header h1{margin:0;font-size:22px;color:${tc}}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:13px;margin-bottom:18px;padding:12px;background:#f8fafc;border-radius:6px}.sign-area{display:flex;gap:48px;margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0}.sign-box{flex:1;text-align:center}.sign-box .line{border-bottom:1px solid #1e293b;height:60px;margin:8px 0 4px;display:flex;align-items:flex-end;justify-content:center}.sign-box img{max-height:56px}</style></head><body><div class="header"><h1>${tp.label}</h1><p style="margin:4px 0 0;color:#64748b">评估报告</p></div><div class="info-grid"><span><b>被评估教员：</b>${state.name}</span><span><b>员工号：</b>${state.employeeId}</span><span><b>单位：</b>${state.unit}</span><span><b>机型模拟机编号：</b>${state.simId}</span><span><b>评估员：</b>${state.assessor}</span><span><b>日期：</b>${state.date}</span><span><b>时段：</b>${state.timeSlot}</span></div>${sections}<div style="margin-top:18px;page-break-inside:avoid"><h3 style="color:${tc};border-bottom:2px solid ${tc};padding-bottom:4px">结论与建议</h3><div style="white-space:pre-wrap;font-size:12px;background:#f8fafc;padding:12px;border-radius:6px">${state.conclusion||"无"}</div></div><div class="sign-area"><div class="sign-box"><b>评估员签字</b><div class="line">${state.signAssessor?`<img src="${state.signAssessor}"/>`:"" }</div></div><div class="sign-box"><b>被评估教员签字</b><div class="line">${state.signInstructor?`<img src="${state.signInstructor}"/>`:"" }</div></div></div><script>setTimeout(()=>{window.print()},600)<\/script></body></html>`;
+  w.document.write(html);
+  w.document.close();
+}
+</script>
+</body>
+</html>
